@@ -1,8 +1,9 @@
 # Graph-Search-Planning
-A-star
 
-ANA-Star
+A-star has been implemented
 
-RRT
+ANA-Star has been implemented pruning is in progress
 
-RRT*
+RRT- is under progress
+
+RRT* - is under progress
