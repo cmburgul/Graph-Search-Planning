@@ -27,7 +27,7 @@ colors = {5: "red", 4: "green", 3: "yellow", 2: "blue", 1: "black", 0: "white"}
 Opens the maze file and creates tkinter GUI object
 '''
 # load maze
-with open("rrt_hard.txt") as text:
+with open("easy.txt") as text:
     maze = [list(line.strip()) for line in text]
 [col, row] = np.shape(maze)
 
@@ -97,7 +97,8 @@ def is_goal(i, j, x2, y2, grid):
         return 0
 
 
-def print_node_info(a, b, grid):
+def print_node_info(a, b):
+    global grid
     print("(%i, %i)" % (grid[a][b].x, grid[a][b].y))
     print("g : ", grid[a][b].g)
     print("h : ", grid[a][b].h)
@@ -127,16 +128,24 @@ def trace_path(start_x, start_y, end_x, end_y, grid):
 # Global variables
 G = 99999999
 E = 99999999
+grid = []
+open_list = []
 
 
 def ana_star(maze, start_node, exit_node):
     global G
     global E
+    global grid
+    global open_list
+
+    print "G : ", G
+    print "E : ", E
+    print "OPEN List : ", len(open_list)
+
     # Iniatilising success flag
     success = False
 
     # Initialize the Grid
-    grid = []
     for i in range(row):
         x_row = []
         for j in range(col):
@@ -156,25 +165,29 @@ def ana_star(maze, start_node, exit_node):
     y1 = start_node[1]
     x2 = exit_node[0]
     y2 = exit_node[1]
+
+    # Initialize start node
     grid[x1][y1] = node(x1, y1)
+    grid[x1][y1].g = 0
+    grid[x1][y1].h = cal_dist(grid[x1][y1].x, grid[x1][y1].y, grid[x2][y2].x, grid[x2][y2].y)
+    grid[x1][y1].e = (G - grid[x1][y1].g) / (grid[x1][y1].h)
+    grid[x1][y1].parent_x = x1
+    grid[x1][y1].parent_y = y1
+    grid[x1][y1].flag = True
     grid[x1][y1]._set_color_(3)
+
     grid[x2][y2] = node(x2, y2)
     grid[x2][y2]._set_color_(4)
+
+    print ("Start Node : ")
+    print_node_info(x1, y1)
 
     # start._set_color_(3)
     maze[x1][y1] = 3
     # goal._set_color_(4)
     maze[x2][y2] = 4
 
-    # Initialize start node
-    grid[x1][y1].g = 1
-    grid[x1][y1].h = cal_dist(grid[x1][y1].x, grid[x1][y1].y, grid[x2][y2].x, grid[x2][y2].y)
-    grid[x1][y1].e = (G - grid[x1][y1].g) / (grid[x1][y1].h)
-    grid[x1][y1].parent_x = x1
-    grid[x1][y1].parent_y = y1
-    grid[x1][y1].flag = True
-
-    open_list = []
+    # Initilize i, j as x1, y1
     i = x1
     j = y1
     open_list.append(grid[i][j])
@@ -182,28 +195,41 @@ def ana_star(maze, start_node, exit_node):
     print("Node added in open_list (%i, %i)" % (i, j))
     # print(is_valid(i, j+1))
 
-    # open_list.remove(grid[i][j])
     print ("-----Start-------")
+
+    # Make other while loop for looping improve solution
+
     while (len(open_list) > 0):
+
+        # Assign max e(s) from all open list nodes as s
+
+        max_e = -5
+        for node_ in open_list:
+            #print_node_info(node_.x, node_.y)
+            if (node_.e > max_e):
+                max_e = node_.e
+                i = node_.x
+                j = node_.y
+
+        print "Selected maximum of e(s) node from open list is (%i, %i)"%(i, j)
+
         open_list.remove(grid[i][j])
         # print("Node removed from open_list (%i, %i)" %(i, j))
 
         # front node i, j+1
         if (is_valid(i, j + 1) == 1):
             if (grid[i][j + 1].flag == False):
-                # print ("Node valid (%i, %i)" %(i, j+1))
                 if (is_empty(i, j + 1) == 1):
                     # print("Is added to open_list")
                     # print ("Node is_empty (%i, %i)" %(i, j+1))
                     if (is_goal(i, j + 1, x2, y2, grid)):
-                        # print ("Write the trace path code")
                         trace_path(x1, y1, i, j, grid)
                         success = True
                     else:
                         grid[i][j + 1] = node(i, j + 1)
                         g = grid[i][j].g + 1
-                        if (g < grid[i][j + 1].g):
-                            grid[i][j + 1].g = grid[i][j].g + 1
+                        #if (g < grid[i][j + 1].g):
+                        #    grid[i][j + 1].g = grid[i][j].g + 1
                         grid[i][j + 1].h = cal_dist(grid[i][j + 1].x, grid[i][j + 1].y, grid[x2][y2].x, grid[x2][y2].y)
                         grid[i][j + 1].e = (G - grid[i][j + 1].g) / grid[i][j + 1].h
                         if (grid[i][j + 1].e < E):
@@ -229,8 +255,8 @@ def ana_star(maze, start_node, exit_node):
                     else:
                         grid[i - 1][j] = node(i - 1, j)
                         g = grid[i][j].g + 1
-                        if (g < grid[i - 1][j].g):
-                            grid[i - 1][j].g = grid[i][j].g + 1
+                        #if (g < grid[i - 1][j].g):
+                        #    grid[i - 1][j].g = grid[i][j].g + 1
                         grid[i - 1][j].h = cal_dist(grid[i - 1][j].x, grid[i - 1][j].y, grid[x2][y2].x, grid[x2][y2].y)
                         grid[i - 1][j].e = (G - grid[i - 1][j].g) / grid[i - 1][j].h
                         if (grid[i - 1][j].e < E):
@@ -257,8 +283,8 @@ def ana_star(maze, start_node, exit_node):
                     else:
                         grid[i][j - 1] = node(i, j - 1)
                         g = grid[i][j].g + 1
-                        if (g < grid[i][j - 1].g):
-                            grid[i][j - 1].g = grid[i][j].g + 1
+                        #if (g < grid[i][j - 1].g):
+                        #    grid[i][j - 1].g = grid[i][j].g + 1
                         grid[i][j - 1].h = cal_dist(grid[i][j - 1].x, grid[i][j - 1].y, grid[x2][y2].x, grid[x2][y2].y)
                         grid[i][j - 1].e = (G - grid[i][j - 1].g) / grid[i][j - 1].h
                         if (grid[i][j - 1].e < E):
@@ -284,8 +310,8 @@ def ana_star(maze, start_node, exit_node):
                     else:
                         grid[i + 1][j] = node(i + 1, j)
                         g = grid[i][j].g + 1
-                        if (g < grid[i + 1][j].g):
-                            grid[i + 1][j].g = grid[i][j].g + 1
+                        #if (g < grid[i + 1][j].g):
+                        #    grid[i + 1][j].g = grid[i][j].g + 1
                         grid[i + 1][j].h = cal_dist(grid[i + 1][j].x, grid[i + 1][j].y, grid[x2][y2].x, grid[x2][y2].y)
                         grid[i + 1][j].e = (G - grid[i + 1][j].g) / grid[i + 1][j].h
                         if (grid[i + 1][j].e < E):
@@ -305,14 +331,17 @@ def ana_star(maze, start_node, exit_node):
         for z in open_list:
             print("(%i, %i)" % (z.x, z.y))
 
+        print "E", E
+
         print ('\n')
         print("-------Iteration------")
 
-        print("Parent node :(%i, %i)" % (open_list[0].x, open_list[0].y))
+        print("Parent nod   se :(%i, %i)" % (open_list[0].x, open_list[0].y))
 
         # Set Parent node
         i = open_list[0].x
         j = open_list[0].y
+
 
     # This visualizes the grid. You may remove this and use the functions as you wish.
     maze[start_node[0]][start_node[1]] = 3
